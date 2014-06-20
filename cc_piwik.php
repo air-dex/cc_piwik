@@ -126,6 +126,24 @@ class CC_Piwik {
 		$this->token_auth = $new_value;
 	}
 	
+	/**
+	 * Setting the token_auth by asking it to the Piwik API.
+	 *
+	 * Note that the method
+	 * @param string $userLogin User login
+	 * @param string $password User's password clear or encrypted with md5.
+	 * @param bool $password_is_clear true if $password is clear,
+	 * false if it is encrypted with md5.
+	 */
+	public function set_token_auth_from_credentials($userLogin, $password, $password_is_clear = true) {
+		$cc_piwik = clone $this;
+		$cc_piwik->set_format('JSON');
+		$piwik_res = json_decode($cc_piwik->usersManager_getTokenAuth($userLogin, $password_is_clear ? md5($password) : $password));
+		if (isset($piwik_res['value'])) {
+			$this->set_token_auth($piwik_res['value']);
+		}
+	}
+	
 	// format
 	
 	/**
@@ -142,5 +160,29 @@ class CC_Piwik {
 	 */
 	public function set_format($new_value) {
 		$this->format = $new_value;
+	}
+	
+	#######################
+	# Module UsersManager #
+	#######################
+	
+	public function UsersManager_addUser($userLogin, $password, $email, $alias = '') {
+		return $this->ask_piwik(__FUNCTION__, func_get_args());
+	}
+	
+	public function UsersManager_getUser($userLogin) {
+		return $this->ask_piwik(__FUNCTION__, func_get_args());
+	}
+	
+	public function UsersManager_updateUser($userLogin, $password = '', $email = '', $alias = '') {
+		return $this->ask_piwik(__FUNCTION__, func_get_args());
+	}
+	
+	public function UsersManager_deleteUser($userLogin) {
+		return $this->ask_piwik(__FUNCTION__, func_get_args());
+	}
+	
+	public function UsersManager_getTokenAuth($userLogin, $md5Password) {
+		return $this->ask_piwik(__FUNCTION__, func_get_args());
 	}
 }
