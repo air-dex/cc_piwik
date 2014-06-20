@@ -165,22 +165,32 @@ class CC_Piwik {
 	#######################
 	
 	public function UsersManager_addUser($userLogin, $password, $email, $alias = '') {
-		return $this->ask_piwik(__FUNCTION__, func_get_args());
+		return $this->ask_piwik(__FUNCTION__, array(
+			'userLogin' => $userLogin,
+			'password' => $password,
+			'email' => $email,
+			'alias' => $alias,
+		));
 	}
 	
 	public function UsersManager_getUser($userLogin) {
-		return $this->ask_piwik(__FUNCTION__, func_get_args());
+		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin));
 	}
 	
 	public function UsersManager_updateUser($userLogin, $password = '', $email = '', $alias = '') {
-		return $this->ask_piwik(__FUNCTION__, func_get_args());
+		return $this->ask_piwik(__FUNCTION__, array(
+			'userLogin' => $userLogin,
+			'password' => $password,
+			'email' => $email,
+			'alias' => $alias,
+		));
 	}
 	
 	public function UsersManager_deleteUser($userLogin) {
-		return $this->ask_piwik(__FUNCTION__, func_get_args());
+		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin));
 	}
 	
 	public function UsersManager_getTokenAuth($userLogin, $md5Password) {
-		return $this->ask_piwik(__FUNCTION__, func_get_args());
+		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin, 'md5Password' => $md5Password));
 	}
 }
