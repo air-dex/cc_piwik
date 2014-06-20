@@ -128,8 +128,6 @@ class CC_Piwik {
 	
 	/**
 	 * Setting the token_auth by asking it to the Piwik API.
-	 *
-	 * Note that the method
 	 * @param string $userLogin User login
 	 * @param string $password User's password clear or encrypted with md5.
 	 * @param bool $password_is_clear true if $password is clear,
