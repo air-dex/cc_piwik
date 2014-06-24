@@ -5,9 +5,22 @@
  * @author Romain Ducher <r.ducher@agence-codecouleurs.fr>
  */
 
+// TODO : LGPLv3 license
+
 namespace cc_piwik;
 
-/** Front class, to use in your code */
+/**
+ * Front class, to use in your code
+ *
+ * Please refer to the Piwik Reporting API reference for further details
+ * about it: http://developer.piwik.org/api-reference/reporting-api
+ *
+ * Note about Piwik responses with errors: they contain two fields:<ul>
+ * <li>The first one is called 'result' and its value is 'error' if there are errors.</li>
+ * <li>The second field is called 'message' and contains the error message.</li>
+ * </ul>
+ * @see http://developer.piwik.org/api-reference/reporting-api
+ */
 class CC_Piwik {
 	####################
 	# Class' internals #
@@ -160,16 +173,43 @@ class CC_Piwik {
 		$this->format = $new_value;
 	}
 	
+	
+	#######################
+	# Module SitesManager #
+	#######################
+	
+	public function SitesManager_getAllSites() {
+		return $this->ask_piwik(__FUNCTION__, array());
+	}
+	
+	public function SitesManager_getAllSitesId() {
+		return $this->ask_piwik(__FUNCTION__, array());
+	}
+	
+	public function SitesManager_getSitesIdFromSiteUrl($url) {
+		return $this->ask_piwik(__FUNCTION__, array('url' => $url));
+	}
+	
+	
 	#######################
 	# Module UsersManager #
 	#######################
 	
+	/**
+	 * Creating a Piwik user.
+	 * @param string $userLogin Login of the brand new.
+	 * @param string $password Its password (clear)
+	 * @param string $email Its email
+	 * @param string $alias Its (optional) alias
+	 * @return string A reply looking like this (in JSON) :
+	 * {'result': 'success|error', 'message': <message for the result>}
+	 */
 	public function UsersManager_addUser($userLogin, $password, $email, $alias = '') {
 		return $this->ask_piwik(__FUNCTION__, array(
 			'userLogin' => $userLogin,
-			'password' => $password,
-			'email' => $email,
-			'alias' => $alias,
+			'password'  => $password,
+			'email'     => $email,
+			'alias'     => $alias,
 		));
 	}
 	
@@ -177,20 +217,122 @@ class CC_Piwik {
 		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin));
 	}
 	
+	/**
+	 * Updating a Piwik user.
+	 *
+	 * All arguments are optional except $userLogin.
+	 * @param string $userLogin Login of the user to update
+	 * @param string $password New password (clear)
+	 * @param string $email New email
+	 * @param string $alias New alias
+	 * @return string A reply looking like this (in JSON) :
+	 * {'result': 'success|error', 'message': <message for the result>}
+	 */
 	public function UsersManager_updateUser($userLogin, $password = '', $email = '', $alias = '') {
-		return $this->ask_piwik(__FUNCTION__, array(
-			'userLogin' => $userLogin,
-			'password' => $password,
-			'email' => $email,
-			'alias' => $alias,
-		));
+		$args = array('userLogin' => $userLogin);
+		
+		if (!empty($password)) {
+			$args['password'] = $password;
+		}
+		
+		if (!empty($email)) {
+			$args['email'] = $email;
+		}
+		
+		if (!empty($alias)) {
+			$args['alias'] = $alias;
+		}
+		
+		return $this->ask_piwik(__FUNCTION__, $args);
 	}
 	
+	/**
+	 * Deleting a Piwik user
+	 * @param string $userLogin Login of the user to delete
+	 * @return string A reply looking like this (in JSON) :
+	 * {'result': 'success|error', 'message': <message for the result>}
+	 */
 	public function UsersManager_deleteUser($userLogin) {
 		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin));
 	}
 	
 	public function UsersManager_getTokenAuth($userLogin, $md5Password) {
 		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin, 'md5Password' => $md5Password));
+	}
+	
+	/**
+	 * Managing user accesses to websites
+	 * @param string $userLogin Login of the user to set rights
+	 * @param string $access Kind of access : 'view' for consulting datas,
+	 * 'admin' to administrate the website on Piwik or 'noaccess' for no accesses
+	 * to the website.
+	 * @param array $idSites Sites for setting the user accesses
+	 * @return string The Reporting Piwik API's JSON reply.
+	 */
+	public function UsersManager_setUserAccess($userLogin, $access, array $idSites) {
+		return $this->ask_piwik(__FUNCTION__, array(
+			'userLogin' => $userLogin,
+			'access'    => $access,
+			'idSites'   => implode(',', $idSites)
+		));
+	}
+	
+	/**
+	 * 
+	 * @param string $access Kind of access : 'view' for consulting datas,
+	 * 'admin' to administrate the website on Piwik or 'noaccess' for no accesses
+	 * to the website.
+	 * @return string The Reporting Piwik API's reply. It is a list containing
+	 * objects which looks like {userLogin: [list of idSites]} (in JSON).
+	 */
+	public function UsersManager_getUsersSitesFromAccess($access) {
+		return $this->ask_piwik(__FUNCTION__, array('access' => $access));
+	}
+	
+	/**
+	 * 
+	 * @param int $idSite Website ID
+	 * @return string The Reporting Piwik API's reply. It is a list
+	 * containing objects which looks like {userLogin: access} (in JSON).
+	 */
+	public function UsersManager_getUsersAccessFromSite($idSite) {
+		return $this->ask_piwik(__FUNCTION__, array('idSite' => intval($idSite)));
+	}
+	
+	/**
+	 * 
+	 * @param int $idSite Website ID
+	 * @param string $access Kind of access : 'view' for consulting datas,
+	 * 'admin' to administrate the website on Piwik or 'noaccess' for no accesses
+	 * to the website.
+	 * @return string The Reporting Piwik API's reply. It is a list of
+	 * Piwik users with all their Piwik datas in objects.
+	 */
+	public function UsersManager_getUsersWithSiteAccess($idSite, $access) {
+		return $this->ask_piwik(__FUNCTION__, array(
+			'idSite' => intval($idSite),
+			'access' => $access
+		));
+	}
+	
+	/**
+	 * 
+	 * @param string $userLogin Login of the user
+	 * @return string The Reporting Piwik API's reply. It is a list of objects
+	 * whick looks like : {'site': idSite , 'access': theAccess} (in JSON).
+	 */
+	public function UsersManager_getSitesAccessFromUser($userLogin) {
+		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin));
+	}
+	
+	/**
+	 * Checks if an user identified by the login $userLogin exists on Piwik.
+	 * @param string $userLogin Login of the user
+	 * @return string The Reporting Piwik API's reply. It is an object with a
+	 * unique field called "value" which is equal to true or false, depending on
+	 * if the user exists or not.
+	 */
+	public function UsersManager_userExists($userLogin) {
+		return $this->ask_piwik(__FUNCTION__, array('userLogin' => $userLogin));
 	}
 }
