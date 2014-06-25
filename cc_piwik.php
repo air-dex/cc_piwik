@@ -8,25 +8,25 @@
  *
  * Copyright 2014 Code Couleurs
  *
- * This file is part of CC_Piwik.
+ * This file is part of CC Piwik.
  * 
- * CC_Piwik is free software: you can redistribute it and/or modify it under
+ * CC Piwik is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
  *
- * CC_Piwik is distributed in the hope that it will be useful, but WITHOUT ANY
+ * CC Piwik is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * OR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * CC_Piwik. If not, see <http://www.gnu.org/licenses/>.
+ * CC Piwik. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace cc_piwik;
 
 /**
- * Front class, to use in your code
+ * Main CC Piwik class, containing all the endpoints to call the Piwik API.
  *
  * Please refer to the Piwik Reporting API reference for further details
  * about it: http://developer.piwik.org/api-reference/reporting-api
@@ -90,10 +90,24 @@ class CC_Piwik {
 	}
 	
 	/**
+	 * Building the Piwik URL to ask with its GET arguments.
+	 * @param array $get_args GET arguments
+	 * @return string The complete URL (to use for asking Piwik some datas).
+	 */
+	protected function build_piwik_url(array $get_args) {
+		$query_args = array();
+		foreach ($get_args as $name => $value) {
+			$query_args[] = $name.'='.urlencode($value);
+		}
+		
+		return $this->piwik_url.'?'.implode('&', $query_args);
+	}
+	
+	/**
 	 * Building the Piwik URL to ask.
 	 * @param string $module 'module' Piwik API's argument
 	 * @param string $method 'method' Piwik API's argument
-	 * @param array $args Other endpoint arguments
+	 * @param array $other_args Other endpoint arguments
 	 * @return string The URL to use for asking Piwik some datas.
 	 */
 	protected function build_endpoint_url($module, $method, array $other_args) {
@@ -107,13 +121,9 @@ class CC_Piwik {
 			)
 		);
 		
-		$query_args = array();
-		foreach ($get_args as $name => $value) {
-			$query_args[] = $name.'='.urlencode($value);
-		}
-		
-		return $this->piwik_url.'?'.implode('&', $query_args);
+		return $this->build_piwik_url($get_args);
 	}
+	
 	
 	#######################
 	# Getters and setters #
@@ -166,8 +176,8 @@ class CC_Piwik {
 		$cc_piwik = clone $this;
 		$cc_piwik->set_format('JSON');
 		$piwik_res = json_decode($cc_piwik->usersManager_getTokenAuth($userLogin, $password_is_clear ? md5($password) : $password));
-		if (isset($piwik_res['value'])) {
-			$this->set_token_auth($piwik_res['value']);
+		if (isset($piwik_res->value)) {
+			$this->set_token_auth($piwik_res->value);
 		}
 	}
 	
@@ -187,6 +197,41 @@ class CC_Piwik {
 	 */
 	public function set_format($new_value) {
 		$this->format = $new_value;
+	}
+	
+	
+	#########
+	# Logme #
+	#########
+	
+	/**
+	 * Building an URL in order to log into Piwik using the 'logme' feature
+	 * ( http://piwik.org/faq/how-to/faq_30/ ).
+	 * @param string $login Login
+	 * @param string $password Password (clear or MD5)
+	 * @param string $redirect_url (Optional) URL to redirect after logging into Piwik.
+	 * @param int $idSite (Optional) Website ID on Piwik.
+	 * @param bool $password_is_clear (Optional) true if $password is the real
+	 * password value, false if $password is the password's MD5.
+	 * @return string The URL to log into Piwik
+	 */
+	public function get_logme_url($login, $password, $redirect_url = '', $idSite = 0, $password_is_clear = true) {
+		$get_args = array(
+			'module'   => 'Login',
+			'action'   => 'logme',
+			'login'    => $login,
+			'password' => $password_is_clear ? md5($password) : $password
+		);
+		
+		if (!empty($redirect_url)) {
+			$get_args['url'] = $redirect_url;
+		}
+		
+		if (!empty($idSite)) {
+			$get_args['idSite'] = intval($idSite);
+		}
+		
+		return $this->build_piwik_url($get_args);
 	}
 	
 	
