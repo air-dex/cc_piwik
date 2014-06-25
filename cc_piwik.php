@@ -3,9 +3,25 @@
  * @file cc_piwik.php
  * @brief Main CC Piwik file, to include in your code.
  * @author Romain Ducher <r.ducher@agence-codecouleurs.fr>
+ * @license https://www.gnu.org/licenses/gpl-3.0.txt
+ * @section LICENSE
+ *
+ * Copyright 2014 Code Couleurs
+ *
+ * This file is part of CC_Piwik.
+ * 
+ * CC_Piwik is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * CC_Piwik is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * OR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * CC_Piwik. If not, see <http://www.gnu.org/licenses/>.
  */
-
-// TODO : LGPLv3 license
 
 namespace cc_piwik;
 
@@ -205,12 +221,17 @@ class CC_Piwik {
 	 * {'result': 'success|error', 'message': <message for the result>}
 	 */
 	public function UsersManager_addUser($userLogin, $password, $email, $alias = '') {
-		return $this->ask_piwik(__FUNCTION__, array(
+		$args = array(
 			'userLogin' => $userLogin,
 			'password'  => $password,
-			'email'     => $email,
-			'alias'     => $alias,
-		));
+			'email'     => $email
+		);
+		
+		if (!empty($alias)) {
+			$args['alias'] = $alias;
+		}
+		
+		return $this->ask_piwik(__FUNCTION__, $args);
 	}
 	
 	public function UsersManager_getUser($userLogin) {
